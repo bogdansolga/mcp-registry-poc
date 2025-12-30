@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build-prod": "next build",
     "start": "next start",
+    "copy-resources": "node scripts/prepare-standalone-minimal.cjs",
+    "start-standalone": "node .next/standalone/server.js",
+    "start-prod": "pnpm run build-prod && pnpm run copy-resources && pnpm run start-standalone",
     "lint": "biome check --write .",
     "format": "biome format --write .",
     "type-check": "tsc --noEmit",
