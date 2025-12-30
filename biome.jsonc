@@ -81,6 +81,16 @@
       }
     },
     {
+      "includes": ["src/lib/auth/basic-auth.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": ["tests/**/*.test.ts"],
       "linter": {
         "rules": {
