@@ -1,0 +1,179 @@
+#!/bin/bash
+
+# Pre-push hook
+# Runs type-check, lint, and unit tests in parallel before pushing
+# Bypass with: git push --no-verify
+
+set -e
+
+echo "Running pre-push checks..."
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_error() {
+    echo -e "${RED}x $1${NC}"
+}
+
+print_success() {
+    echo -e "${GREEN}v $1${NC}"
+}
+
+print_warning() {
+    echo -e "${YELLOW}! $1${NC}"
+}
+
+print_info() {
+    echo -e "${BLUE}i $1${NC}"
+}
+
+# Create temporary files for capturing output
+TYPE_CHECK_LOG=$(mktemp)
+LINT_LOG=$(mktemp)
+UNIT_LOG=$(mktemp)
+
+# Cleanup function
+cleanup() {
+    rm -f "$TYPE_CHECK_LOG" "$LINT_LOG" "$UNIT_LOG"
+}
+trap cleanup EXIT
+
+# Track exit codes
+TYPE_CHECK_EXIT_CODE=0
+LINT_EXIT_CODE=0
+UNIT_EXIT_CODE=0
+
+# Check if running in CI environment
+if [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ] || [ -n "$GITLAB_CI" ] || [ -n "$JENKINS_URL" ]; then
+    print_warning "Detected CI environment - skipping pre-push hook"
+    exit 0
+fi
+
+echo ""
+print_info "Running all checks in parallel..."
+echo "----------------------------------------"
+echo ""
+
+# Run type-check in background
+{
+    echo "[Type Check] Starting..."
+    if pnpm run type-check > "$TYPE_CHECK_LOG" 2>&1; then
+        echo "[Type Check] v Passed"
+    else
+        echo "[Type Check] x Failed"
+        exit 1
+    fi
+} &
+TYPE_CHECK_PID=$!
+
+# Run lint in background
+{
+    echo "[Lint] Starting..."
+    if pnpm run lint > "$LINT_LOG" 2>&1; then
+        echo "[Lint] v Passed"
+    else
+        echo "[Lint] x Failed"
+        exit 1
+    fi
+} &
+LINT_PID=$!
+
+# Run unit tests in background
+{
+    echo "[Unit Tests] Starting..."
+    if pnpm run test --silent > "$UNIT_LOG" 2>&1; then
+        echo "[Unit Tests] v Passed"
+    else
+        echo "[Unit Tests] x Failed"
+        exit 1
+    fi
+} &
+UNIT_PID=$!
+
+# Wait for type-check
+if wait $TYPE_CHECK_PID; then
+    TYPE_CHECK_EXIT_CODE=0
+else
+    TYPE_CHECK_EXIT_CODE=1
+fi
+
+# Wait for lint
+if wait $LINT_PID; then
+    LINT_EXIT_CODE=0
+else
+    LINT_EXIT_CODE=1
+fi
+
+# Wait for unit tests
+if wait $UNIT_PID; then
+    UNIT_EXIT_CODE=0
+else
+    UNIT_EXIT_CODE=1
+fi
+
+echo ""
+echo "----------------------------------------"
+echo ""
+
+# Display results
+echo "Check Results:"
+echo ""
+
+if [ $TYPE_CHECK_EXIT_CODE -eq 0 ]; then
+    print_success "Type Check: Passed"
+else
+    print_error "Type Check: Failed"
+    echo ""
+    echo "  Last 20 lines of type-check output:"
+    tail -20 "$TYPE_CHECK_LOG" | sed 's/^/  /'
+fi
+
+echo ""
+
+if [ $LINT_EXIT_CODE -eq 0 ]; then
+    print_success "Lint: Passed"
+else
+    print_error "Lint: Failed"
+    echo ""
+    echo "  Last 20 lines of lint output:"
+    tail -20 "$LINT_LOG" | sed 's/^/  /'
+fi
+
+echo ""
+
+if [ $UNIT_EXIT_CODE -eq 0 ]; then
+    print_success "Unit Tests: Passed"
+    # Show test summary from output
+    grep -E "Test Files.*passed|Tests.*passed" "$UNIT_LOG" | head -2 | sed 's/^/  /' || true
+else
+    print_error "Unit Tests: Failed"
+    echo ""
+    echo "  Last 20 lines of unit test output:"
+    tail -20 "$UNIT_LOG" | sed 's/^/  /'
+fi
+
+echo ""
+echo "----------------------------------------"
+
+# Check if any checks failed
+if [ $TYPE_CHECK_EXIT_CODE -ne 0 ] || [ $LINT_EXIT_CODE -ne 0 ] || [ $UNIT_EXIT_CODE -ne 0 ]; then
+    echo ""
+    print_error "Pre-push checks failed!"
+    echo ""
+    echo "Fix the failing checks before pushing, or use:"
+    echo "  git push --no-verify"
+    echo ""
+    exit 1
+else
+    echo ""
+    print_success "All pre-push checks passed!"
+    echo ""
+    echo "Safe to push!"
+    echo ""
+    exit 0
+fi

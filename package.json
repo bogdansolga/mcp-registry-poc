@@ -6,20 +6,36 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "biome check --write .",
+    "format": "biome format --write .",
+    "type-check": "tsc --noEmit",
+    "hooks:install": "node scripts/setup/install-git-hooks.js",
+    "verify:all": "pnpm run type-check && pnpm run lint",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:dump": "./scripts/db/dump-database.sh",
+    "db:restore": "./scripts/db/restore-database.sh"
   },
   "dependencies": {
+    "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.45.1",
     "next": "16.1.1",
+    "pg": "^8.16.3",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@biomejs/biome": "^2.3.10",
+    "@types/node": "^20.19.27",
+    "@types/pg": "^8.16.0",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
     "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^9",
+    "drizzle-kit": "^0.31.8",
+    "eslint": "^9.39.2",
     "eslint-config-next": "16.1.1",
-    "typescript": "^5"
+    "typescript": "^5.9.3",
+    "ultracite": "^6.5.0"
   }
 }
