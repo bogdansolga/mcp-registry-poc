@@ -10,8 +10,9 @@ POSTGRES_VERSION=18
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_SUPERUSER=postgres  # PostgreSQL superuser for creating database
-POSTGRES_APP_USER=finances_manager_admin  # Application user for access
+POSTGRES_APP_USER=mcp_registry_admin  # Application user for access
 POSTGRES_DB=mcp_registry
+POSTGRES_APP_PASSWORD=zWyM00mZBHGi2IYTrdkPgYPKoOZYpm2ZLg7m67  # Default password
 
 # Detect machine and set Postgres location
 CURRENT_MACHINE=$(hostname -s)
@@ -32,6 +33,27 @@ INIT_SQL="${SCRIPT_DIR}/init-schemas.sql"
 
 echo "=== MCP Registry Database Setup ==="
 echo ""
+
+# Create user if it doesn't exist
+echo "Ensuring user ${POSTGRES_APP_USER} exists..."
+"${PSQL}" \
+  --host="${POSTGRES_HOST}" \
+  --port="${POSTGRES_PORT}" \
+  --username="${POSTGRES_SUPERUSER}" \
+  --dbname=postgres \
+  --quiet \
+  --command="
+    DO \$\$
+    BEGIN
+      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '${POSTGRES_APP_USER}') THEN
+        CREATE ROLE ${POSTGRES_APP_USER} WITH LOGIN PASSWORD '${POSTGRES_APP_PASSWORD}';
+        RAISE NOTICE 'Created user ${POSTGRES_APP_USER}';
+      ELSE
+        RAISE NOTICE 'User ${POSTGRES_APP_USER} already exists';
+      END IF;
+    END
+    \$\$;
+  "
 
 # Check if database already exists
 DB_EXISTS=$("${PSQL}" \

@@ -10,7 +10,7 @@ set -euo pipefail
 POSTGRES_VERSION=18
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
-POSTGRES_USER=finances_manager_admin
+POSTGRES_USER=mcp_registry_admin
 POSTGRES_DB=mcp_registry
 
 # Detect machine and set Postgres location
