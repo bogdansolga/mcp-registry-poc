@@ -1,0 +1,15 @@
+# MCP Registry Docker Compose Configuration
+# Note: Using local PostgreSQL server (not Docker)
+# This file is reserved for future MCP server containers
+
+services:
+  # Placeholder for future MCP server containers
+  # Example: JIRA MCP Server, Context7 MCP Server, etc.
+
+  # postgres:
+  #   # Using local PostgreSQL server instead
+  #   # See .env for DATABASE_URL configuration
+
+networks:
+  mcp-network:
+    driver: bridge
