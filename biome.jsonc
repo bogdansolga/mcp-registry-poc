@@ -6,6 +6,7 @@
       "src/components/**/*.tsx",
       "src/components/**/*.ts",
       "src/lib/**/*.ts",
+      "src/instrumentation.ts",
       "tests/**/*.ts",
       "!**/*.min.js",
       "!.next",
