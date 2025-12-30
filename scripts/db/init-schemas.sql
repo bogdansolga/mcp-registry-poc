@@ -7,22 +7,7 @@ CREATE SCHEMA IF NOT EXISTS registry;
 -- Create metrics schema for health and usage tracking
 CREATE SCHEMA IF NOT EXISTS metrics;
 
--- Create public enums that will be used across schemas
--- These are in public schema so they can be referenced by multiple schemas
-
--- Server type enum
-DO $$ BEGIN
-  CREATE TYPE public.server_type AS ENUM ('stdio', 'sse', 'mock');
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
-
--- Server status enum
-DO $$ BEGIN
-  CREATE TYPE public.server_status AS ENUM ('active', 'inactive', 'error');
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
+-- Enums are created by Drizzle in the registry schema
 
 -- Log initialization
 DO $$
