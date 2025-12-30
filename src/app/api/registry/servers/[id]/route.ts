@@ -4,11 +4,12 @@ import { requireBasicAuth } from "@/lib/auth/basic-auth";
 import { db } from "@/lib/core/db";
 import { mcpServers, serverMetadata, tools } from "@/lib/core/db/schema";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authError = requireBasicAuth(request);
   if (authError) return authError;
 
-  const serverId = parseInt(params.id, 10);
+  const { id } = await params;
+  const serverId = parseInt(id, 10);
   if (Number.isNaN(serverId)) {
     return NextResponse.json({ error: "Invalid server ID", code: "VALIDATION_ERROR" }, { status: 400 });
   }

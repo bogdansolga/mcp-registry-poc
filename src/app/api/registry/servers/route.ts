@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         version: mcpServers.version,
         last_health_check: mcpServers.lastHealthCheck,
         tools_count: sql<number>`(
-          SELECT COUNT(*)
+          SELECT COUNT(*)::int
           FROM ${tools}
           WHERE ${tools.serverId} = ${mcpServers.id}
         )`,
