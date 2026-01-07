@@ -23,7 +23,7 @@ function Navigation() {
     <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
       <div className="container flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white font-bold text-sm">
+          <div className="flex h-9 items-center justify-center rounded-lg bg-primary px-3 text-white font-bold text-sm">
             MCP
           </div>
           <span className="font-semibold text-lg">Registry</span>
@@ -40,6 +40,12 @@ function Navigation() {
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             Categories
+          </Link>
+          <Link
+            href="/api-docs"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            API Docs
           </Link>
           <Link
             href="/register"

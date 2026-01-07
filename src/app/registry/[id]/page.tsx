@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Wrench } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ServerHeader } from "@/components/registry/server-header";
@@ -73,28 +73,37 @@ export default async function ServerDetailPage({ params }: { params: Promise<{ i
   }
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <Button variant="ghost" asChild>
-          <Link href="/registry">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Registry
-          </Link>
-        </Button>
-      </div>
+    <main className="min-h-screen bg-slate-50/50">
+      <div className="container py-10">
+        <div className="mb-6">
+          <Button variant="ghost" asChild>
+            <Link href="/registry">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Registry
+            </Link>
+          </Button>
+        </div>
 
-      <div className="space-y-6">
-        <ServerHeader server={server} metadata={server.metadata} toolsCount={server.tools.length} />
+        <div className="space-y-6">
+          <ServerHeader server={server} metadata={server.metadata} toolsCount={server.tools.length} />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Available Tools</CardTitle>
-            <CardDescription>{server.tools.length} tools provided by this server</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ToolsGrid tools={server.tools} serverId={server.id} />
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
+                  <Wrench className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <CardTitle>Available Tools</CardTitle>
+                  <CardDescription>{server.tools.length} tools provided by this server</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ToolsGrid tools={server.tools} serverId={server.id} />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </main>
   );

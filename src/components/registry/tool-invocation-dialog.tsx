@@ -65,7 +65,7 @@ export function ToolInvocationDialog({ isOpen, onClose, tool, serverId }: ToolIn
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Basic " + btoa("admin:password"),
+          Authorization: `Basic ${btoa("admin:password")}`,
         },
         body: JSON.stringify({
           server_id: serverId,

@@ -1,7 +1,7 @@
-import { BookOpen, ExternalLink, Github, Package, User, Wrench } from "lucide-react";
+import { BookOpen, ExternalLink, Github, Package, Server, User, Wrench } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ServerMetadata {
   serverId: number;
@@ -43,7 +43,7 @@ function getTypeBadgeVariant(type: string) {
     case "official":
       return "default";
     case "community":
-      return "secondary";
+      return "blue";
     case "mock":
       return "outline";
     default:
@@ -51,14 +51,32 @@ function getTypeBadgeVariant(type: string) {
   }
 }
 
+function getStatusBorderColor(status: string) {
+  switch (status) {
+    case "active":
+      return "border-l-green-500";
+    case "inactive":
+      return "border-l-yellow-500";
+    case "error":
+      return "border-l-red-500";
+    default:
+      return "border-l-slate-300";
+  }
+}
+
 export function ServerHeader({ server, metadata, toolsCount }: ServerHeaderProps) {
   return (
-    <Card>
+    <Card className={`border-l-4 ${getStatusBorderColor(server.status)}`}>
       <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-2xl">{server.displayName}</CardTitle>
-            <CardDescription className="text-sm">{server.name}</CardDescription>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+              <Server className="h-7 w-7 text-primary" />
+            </div>
+            <div className="space-y-1">
+              <CardTitle className="text-2xl">{server.displayName}</CardTitle>
+              <p className="text-sm text-muted-foreground">{server.name}</p>
+            </div>
           </div>
           <div className="flex gap-2">
             <Badge variant={getStatusBadgeVariant(server.status)}>{server.status}</Badge>

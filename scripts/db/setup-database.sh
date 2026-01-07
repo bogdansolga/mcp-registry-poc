@@ -103,7 +103,7 @@ echo "Initializing schemas (registry, metrics)..."
   --quiet \
   --file="${INIT_SQL}"
 
-# Grant all privileges to application user
+# Grant all privileges to application user and transfer schema ownership
 echo "Granting privileges to ${POSTGRES_APP_USER}..."
 "${PSQL}" \
   --host="${POSTGRES_HOST}" \
@@ -113,6 +113,8 @@ echo "Granting privileges to ${POSTGRES_APP_USER}..."
   --quiet \
   --command="
     GRANT ALL PRIVILEGES ON DATABASE ${POSTGRES_DB} TO ${POSTGRES_APP_USER};
+    ALTER SCHEMA registry OWNER TO ${POSTGRES_APP_USER};
+    ALTER SCHEMA metrics OWNER TO ${POSTGRES_APP_USER};
     GRANT ALL ON SCHEMA registry TO ${POSTGRES_APP_USER};
     GRANT ALL ON SCHEMA metrics TO ${POSTGRES_APP_USER};
     GRANT ALL ON SCHEMA public TO ${POSTGRES_APP_USER};
