@@ -2,7 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ServerHeader } from "@/components/registry/server-header";
-import { Badge } from "@/components/ui/badge";
+import { ToolsGrid } from "@/components/registry/tools-grid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -92,39 +92,7 @@ export default async function ServerDetailPage({ params }: { params: Promise<{ i
             <CardDescription>{server.tools.length} tools provided by this server</CardDescription>
           </CardHeader>
           <CardContent>
-            {server.tools.length === 0 ? (
-              <p className="text-muted-foreground">No tools available</p>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2">
-                {server.tools.map((tool) => (
-                  <Card key={tool.id} className="border-muted">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between">
-                        <CardTitle className="text-base">{tool.name}</CardTitle>
-                        {tool.category && (
-                          <Badge variant="outline" className="text-xs">
-                            {tool.category}
-                          </Badge>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">{tool.description || "No description available"}</p>
-                      {tool.inputSchema && (
-                        <details className="mt-2">
-                          <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
-                            View input schema
-                          </summary>
-                          <pre className="mt-2 overflow-auto rounded bg-muted p-2 text-xs">
-                            {JSON.stringify(tool.inputSchema, null, 2)}
-                          </pre>
-                        </details>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+            <ToolsGrid tools={server.tools} serverId={server.id} />
           </CardContent>
         </Card>
       </div>
