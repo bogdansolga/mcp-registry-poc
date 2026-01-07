@@ -115,7 +115,8 @@ export default function ApiDocsPage() {
             <CardContent className="pt-6">
               <CodeBlock>{`https://your-registry-domain.com/api`}</CodeBlock>
               <p className="mt-4 text-sm text-muted-foreground">
-                For local development, use <code className="bg-muted px-1.5 py-0.5 rounded">http://localhost:3000/api</code>
+                For local development, use{" "}
+                <code className="bg-muted px-1.5 py-0.5 rounded">http://localhost:3000/api</code>
               </p>
             </CardContent>
           </Card>
@@ -319,37 +320,51 @@ export default function ApiDocsPage() {
                   </thead>
                   <tbody>
                     <tr className="border-b">
-                      <td className="py-3 px-4"><code>UNAUTHORIZED</code></td>
+                      <td className="py-3 px-4">
+                        <code>UNAUTHORIZED</code>
+                      </td>
                       <td className="py-3 px-4">401</td>
                       <td className="py-3 px-4 text-muted-foreground">Invalid or missing credentials</td>
                     </tr>
                     <tr className="border-b">
-                      <td className="py-3 px-4"><code>VALIDATION_ERROR</code></td>
+                      <td className="py-3 px-4">
+                        <code>VALIDATION_ERROR</code>
+                      </td>
                       <td className="py-3 px-4">400</td>
                       <td className="py-3 px-4 text-muted-foreground">Invalid request parameters or body</td>
                     </tr>
                     <tr className="border-b">
-                      <td className="py-3 px-4"><code>SERVER_NOT_FOUND</code></td>
+                      <td className="py-3 px-4">
+                        <code>SERVER_NOT_FOUND</code>
+                      </td>
                       <td className="py-3 px-4">404</td>
                       <td className="py-3 px-4 text-muted-foreground">MCP server not found in registry</td>
                     </tr>
                     <tr className="border-b">
-                      <td className="py-3 px-4"><code>TOOL_NOT_FOUND</code></td>
+                      <td className="py-3 px-4">
+                        <code>TOOL_NOT_FOUND</code>
+                      </td>
                       <td className="py-3 px-4">404</td>
                       <td className="py-3 px-4 text-muted-foreground">Tool not found on the server</td>
                     </tr>
                     <tr className="border-b">
-                      <td className="py-3 px-4"><code>DUPLICATE_SERVER</code></td>
+                      <td className="py-3 px-4">
+                        <code>DUPLICATE_SERVER</code>
+                      </td>
                       <td className="py-3 px-4">409</td>
                       <td className="py-3 px-4 text-muted-foreground">Server name already exists</td>
                     </tr>
                     <tr className="border-b">
-                      <td className="py-3 px-4"><code>INVOCATION_ERROR</code></td>
+                      <td className="py-3 px-4">
+                        <code>INVOCATION_ERROR</code>
+                      </td>
                       <td className="py-3 px-4">502</td>
                       <td className="py-3 px-4 text-muted-foreground">Error invoking the MCP server</td>
                     </tr>
                     <tr>
-                      <td className="py-3 px-4"><code>INTERNAL_ERROR</code></td>
+                      <td className="py-3 px-4">
+                        <code>INTERNAL_ERROR</code>
+                      </td>
                       <td className="py-3 px-4">500</td>
                       <td className="py-3 px-4 text-muted-foreground">Internal server error</td>
                     </tr>
