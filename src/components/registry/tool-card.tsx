@@ -37,9 +37,7 @@ export function ToolCard({ tool, serverId }: ToolCardProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            {tool.description || "No description available"}
-          </p>
+          <p className="text-sm text-muted-foreground">{tool.description || "No description available"}</p>
           {tool.inputSchema && (
             <details className="mt-2">
               <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
@@ -51,11 +49,7 @@ export function ToolCard({ tool, serverId }: ToolCardProps) {
             </details>
           )}
           <div className="mt-4">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setIsDialogOpen(true)}
-            >
+            <Button size="sm" variant="outline" onClick={() => setIsDialogOpen(true)}>
               Invoke Tool
             </Button>
           </div>

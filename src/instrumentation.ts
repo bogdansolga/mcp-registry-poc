@@ -69,9 +69,7 @@ export async function register() {
       const { mcpServers } = await import("@/lib/core/db/schema");
       const { sql } = await import("drizzle-orm");
 
-      const [countResult] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(mcpServers);
+      const [countResult] = await db.select({ count: sql<number>`count(*)::int` }).from(mcpServers);
 
       logger.info(`MCP Registry initialized with ${countResult.count} registered server(s)`);
     } catch (error) {

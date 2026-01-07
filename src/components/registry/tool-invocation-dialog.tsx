@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -28,12 +28,7 @@ interface InvocationResult {
   duration_ms?: number;
 }
 
-export function ToolInvocationDialog({
-  isOpen,
-  onClose,
-  tool,
-  serverId,
-}: ToolInvocationDialogProps) {
+export function ToolInvocationDialog({ isOpen, onClose, tool, serverId }: ToolInvocationDialogProps) {
   const [argumentsText, setArgumentsText] = useState("{}");
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<InvocationResult | null>(null);
@@ -99,22 +94,14 @@ export function ToolInvocationDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Overlay */}
-      <div
-        className="fixed inset-0 bg-black/50"
-        onClick={handleClose}
-        aria-hidden="true"
-      />
+      <div className="fixed inset-0 bg-black/50" onClick={handleClose} aria-hidden="true" />
 
       {/* Modal */}
       <div className="relative bg-background rounded-lg p-6 max-w-lg w-full mx-4 shadow-xl border max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="mb-4">
           <h2 className="text-lg font-semibold">Invoke Tool: {tool.name}</h2>
-          {tool.description && (
-            <p className="text-sm text-muted-foreground mt-1">
-              {tool.description}
-            </p>
-          )}
+          {tool.description && <p className="text-sm text-muted-foreground mt-1">{tool.description}</p>}
         </div>
 
         {/* Input Schema Reference */}
@@ -131,9 +118,7 @@ export function ToolInvocationDialog({
 
         {/* Arguments Input */}
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-2">
-            Arguments (JSON)
-          </label>
+          <label className="block text-sm font-medium mb-2">Arguments (JSON)</label>
           <Textarea
             value={argumentsText}
             onChange={(e) => {
@@ -146,9 +131,7 @@ export function ToolInvocationDialog({
             className="font-mono text-sm min-h-[120px]"
             disabled={isLoading}
           />
-          {validationError && (
-            <p className="text-sm text-destructive mt-1">{validationError}</p>
-          )}
+          {validationError && <p className="text-sm text-destructive mt-1">{validationError}</p>}
         </div>
 
         {/* Result Display */}
@@ -167,9 +150,7 @@ export function ToolInvocationDialog({
                   <div className="text-green-700 dark:text-green-300 font-medium mb-2">
                     Success
                     {result.duration_ms !== undefined && (
-                      <span className="font-normal text-xs ml-2">
-                        ({result.duration_ms}ms)
-                      </span>
+                      <span className="font-normal text-xs ml-2">({result.duration_ms}ms)</span>
                     )}
                   </div>
                   <pre className="overflow-auto text-xs bg-white/50 dark:bg-black/20 rounded p-2 max-h-40">
@@ -181,9 +162,7 @@ export function ToolInvocationDialog({
                   <div className="text-red-700 dark:text-red-300 font-medium mb-1">
                     Error{result.code && ` (${result.code})`}
                   </div>
-                  <p className="text-red-600 dark:text-red-400">
-                    {result.error}
-                  </p>
+                  <p className="text-red-600 dark:text-red-400">{result.error}</p>
                 </>
               )}
             </div>

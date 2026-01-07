@@ -29,10 +29,16 @@ function Navigation() {
           <span className="font-semibold text-lg">Registry</span>
         </Link>
         <nav className="flex items-center gap-6">
-          <Link href="/registry" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <Link
+            href="/registry"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
             Browse
           </Link>
-          <Link href="/categories" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <Link
+            href="/categories"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
             Categories
           </Link>
           <Link

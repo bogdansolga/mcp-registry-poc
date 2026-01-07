@@ -9,9 +9,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="border-b bg-gradient-to-b from-slate-50 to-white py-24">
         <div className="container text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
-            MCP Registry
-          </h1>
+          <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">MCP Registry</h1>
           <p className="mx-auto mt-6 max-w-2xl text-xl text-slate-600">
             Centralized catalog for Model Context Protocol servers
           </p>
@@ -140,9 +138,7 @@ export default function Home() {
                 <Server className="h-8 w-8 text-slate-600" />
               </div>
               <h3 className="mb-3 text-lg font-semibold text-slate-900">Centralized Discovery</h3>
-              <p className="text-slate-600">
-                Find and connect to MCP servers from a single, unified catalog
-              </p>
+              <p className="text-slate-600">Find and connect to MCP servers from a single, unified catalog</p>
             </div>
             <div className="text-center">
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm">
@@ -158,9 +154,7 @@ export default function Home() {
                 <FolderOpen className="h-8 w-8 text-slate-600" />
               </div>
               <h3 className="mb-3 text-lg font-semibold text-slate-900">Organized Categories</h3>
-              <p className="text-slate-600">
-                Tools organized by category for easy browsing and discovery
-              </p>
+              <p className="text-slate-600">Tools organized by category for easy browsing and discovery</p>
             </div>
           </div>
         </div>

@@ -44,34 +44,34 @@ export default async function CategoriesPage() {
           <p className="mt-2 text-slate-600">Browse MCP tools by category</p>
         </div>
 
-      {data.categories.length === 0 ? (
-        <Card>
-          <CardContent className="py-8">
-            <p className="text-center text-muted-foreground">No categories available</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {data.categories.map((category) => (
-            <Link key={category.name} href={`/categories/${encodeURIComponent(category.name)}`}>
-              <Card className="h-full transition-colors hover:border-primary/50 hover:bg-accent/50">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg capitalize">{category.name}</CardTitle>
-                    <Badge variant="secondary">{category.tool_count} tools</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>
-                    Browse {category.tool_count} tool{category.tool_count !== 1 ? "s" : ""} in the {category.name}{" "}
-                    category
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
+        {data.categories.length === 0 ? (
+          <Card>
+            <CardContent className="py-8">
+              <p className="text-center text-muted-foreground">No categories available</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {data.categories.map((category) => (
+              <Link key={category.name} href={`/categories/${encodeURIComponent(category.name)}`}>
+                <Card className="h-full transition-colors hover:border-primary/50 hover:bg-accent/50">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-lg capitalize">{category.name}</CardTitle>
+                      <Badge variant="secondary">{category.tool_count} tools</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription>
+                      Browse {category.tool_count} tool{category.tool_count !== 1 ? "s" : ""} in the {category.name}{" "}
+                      category
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );
