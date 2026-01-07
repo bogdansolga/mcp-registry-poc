@@ -17,10 +17,15 @@ interface Tool {
   input_schema: string;
 }
 
+type AuthType = "none" | "basic" | "bearer" | "api_key";
+
 interface FormErrors {
   name?: string;
   display_name?: string;
   endpoint_url?: string;
+  auth_username?: string;
+  auth_password?: string;
+  auth_token?: string;
   tools?: { [key: number]: { name?: string; description?: string; input_schema?: string } };
 }
 
@@ -42,6 +47,13 @@ export function ServerRegistrationForm() {
   const [serverType, setServerType] = useState<"official" | "community" | "mock">("community");
   const [endpointUrl, setEndpointUrl] = useState("");
   const [version, setVersion] = useState("");
+
+  // Authentication
+  const [authExpanded, setAuthExpanded] = useState(false);
+  const [authType, setAuthType] = useState<AuthType>("none");
+  const [authUsername, setAuthUsername] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authToken, setAuthToken] = useState("");
 
   // Metadata
   const [metadataExpanded, setMetadataExpanded] = useState(false);
@@ -103,6 +115,14 @@ export function ServerRegistrationForm() {
 
     const urlError = validateUrl(endpointUrl);
     if (urlError) newErrors.endpoint_url = urlError;
+
+    // Validate auth fields based on type
+    if (authType === "basic") {
+      if (!authUsername) newErrors.auth_username = "Username is required for Basic Auth";
+      if (!authPassword) newErrors.auth_password = "Password is required for Basic Auth";
+    } else if (authType === "bearer" || authType === "api_key") {
+      if (!authToken) newErrors.auth_token = "Token is required";
+    }
 
     // Validate tools
     if (tools.length > 0) {
@@ -178,6 +198,21 @@ export function ServerRegistrationForm() {
         ...(tool.input_schema && { input_schema: JSON.parse(tool.input_schema) }),
       }));
 
+      // Build auth object
+      const auth: {
+        type: "basic" | "bearer" | "api_key" | "none";
+        username?: string;
+        password?: string;
+        token?: string;
+      } = { type: authType };
+
+      if (authType === "basic") {
+        auth.username = authUsername;
+        auth.password = authPassword;
+      } else if (authType === "bearer" || authType === "api_key") {
+        auth.token = authToken;
+      }
+
       // Build request body
       const body: {
         name: string;
@@ -188,6 +223,7 @@ export function ServerRegistrationForm() {
         version?: string;
         metadata?: typeof metadata;
         tools?: typeof formattedTools;
+        auth?: typeof auth;
       } = {
         name,
         display_name: displayName,
@@ -199,6 +235,7 @@ export function ServerRegistrationForm() {
       if (version) body.version = version;
       if (Object.keys(metadata).length > 0) body.metadata = metadata;
       if (formattedTools.length > 0) body.tools = formattedTools;
+      if (authType !== "none") body.auth = auth;
 
       const response = await fetch("/api/registry/register", {
         method: "POST",
@@ -328,7 +365,80 @@ export function ServerRegistrationForm() {
         </CardContent>
       </Card>
 
-      {/* Section 2: Metadata (Collapsible) */}
+      {/* Section 2: Authentication (Collapsible) */}
+      <Card>
+        <CardHeader className="cursor-pointer" onClick={() => setAuthExpanded(!authExpanded)}>
+          <CardTitle className="flex items-center justify-between">
+            <span>Authentication (Optional)</span>
+            <span className="text-sm font-normal text-muted-foreground">{authExpanded ? "[-]" : "[+]"}</span>
+          </CardTitle>
+        </CardHeader>
+        {authExpanded && (
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="authType">Auth Type</Label>
+              <Select id="authType" value={authType} onChange={(e) => setAuthType(e.target.value as AuthType)}>
+                <option value="none">None</option>
+                <option value="basic">Basic Auth</option>
+                <option value="bearer">Bearer Token</option>
+                <option value="api_key">API Key</option>
+              </Select>
+            </div>
+
+            {authType === "basic" && (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="authUsername">
+                    Username <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="authUsername"
+                    placeholder="username"
+                    value={authUsername}
+                    onChange={(e) => setAuthUsername(e.target.value)}
+                    aria-invalid={!!errors.auth_username}
+                  />
+                  {errors.auth_username && <p className="text-sm text-destructive">{errors.auth_username}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="authPassword">
+                    Password <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="authPassword"
+                    type="password"
+                    placeholder="password"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    aria-invalid={!!errors.auth_password}
+                  />
+                  {errors.auth_password && <p className="text-sm text-destructive">{errors.auth_password}</p>}
+                </div>
+              </div>
+            )}
+
+            {(authType === "bearer" || authType === "api_key") && (
+              <div className="space-y-2">
+                <Label htmlFor="authToken">
+                  Token <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="authToken"
+                  type="password"
+                  placeholder="Enter token"
+                  value={authToken}
+                  onChange={(e) => setAuthToken(e.target.value)}
+                  aria-invalid={!!errors.auth_token}
+                />
+                {errors.auth_token && <p className="text-sm text-destructive">{errors.auth_token}</p>}
+              </div>
+            )}
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Section 3: Metadata (Collapsible) */}
       <Card>
         <CardHeader className="cursor-pointer" onClick={() => setMetadataExpanded(!metadataExpanded)}>
           <CardTitle className="flex items-center justify-between">
@@ -383,7 +493,7 @@ export function ServerRegistrationForm() {
         )}
       </Card>
 
-      {/* Section 3: Tools (Dynamic List) */}
+      {/* Section 4: Tools (Dynamic List) */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">

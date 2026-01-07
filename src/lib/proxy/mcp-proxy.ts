@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import { decrypt } from "@/lib/auth/encryption";
 import { db } from "@/lib/core/db";
 import { mcpServers, toolInvocations, tools } from "@/lib/core/db/schema";
 import { logger } from "@/lib/core/utils/logger";
@@ -26,6 +27,16 @@ export interface ProxyResult extends ProxyResponse {
   errorCode?: "SERVER_NOT_FOUND" | "TOOL_NOT_FOUND" | "INVOCATION_ERROR" | "VALIDATION_ERROR";
 }
 
+/**
+ * Authentication parameters for HTTP requests to MCP servers
+ */
+export interface AuthParams {
+  type: "none" | "basic" | "bearer" | "api_key";
+  username?: string;
+  password?: string;
+  token?: string;
+}
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -48,6 +59,93 @@ function isStdioTransport(endpointUrl: string): boolean {
 }
 
 /**
+ * Builds authentication headers based on auth type
+ */
+function buildAuthHeaders(auth: AuthParams): Record<string, string> {
+  const headers: Record<string, string> = {};
+
+  switch (auth.type) {
+    case "basic": {
+      if (auth.username && auth.password) {
+        const credentials = Buffer.from(`${auth.username}:${auth.password}`).toString("base64");
+        headers["Authorization"] = `Basic ${credentials}`;
+      }
+      break;
+    }
+    case "bearer": {
+      if (auth.token) {
+        headers["Authorization"] = `Bearer ${auth.token}`;
+      }
+      break;
+    }
+    case "api_key": {
+      if (auth.token) {
+        headers["X-API-Key"] = auth.token;
+      }
+      break;
+    }
+    case "none":
+    default:
+      // No auth headers needed
+      break;
+  }
+
+  return headers;
+}
+
+/**
+ * Extracts and decrypts authentication credentials from a server record.
+ * Returns undefined if no auth is configured, or the decrypted auth params.
+ * Handles decryption errors gracefully by logging and returning undefined.
+ */
+function extractServerAuth(server: {
+  authType: "none" | "basic" | "bearer" | "api_key" | null;
+  authUsername: string | null;
+  authPassword: string | null;
+  authToken: string | null;
+}): AuthParams | undefined {
+  // No auth configured
+  if (!server.authType || server.authType === "none") {
+    return undefined;
+  }
+
+  try {
+    switch (server.authType) {
+      case "basic": {
+        const password = server.authPassword ? decrypt(server.authPassword) : undefined;
+        return {
+          type: "basic",
+          username: server.authUsername || undefined,
+          password,
+        };
+      }
+      case "bearer": {
+        const token = server.authToken ? decrypt(server.authToken) : undefined;
+        return {
+          type: "bearer",
+          token,
+        };
+      }
+      case "api_key": {
+        const token = server.authToken ? decrypt(server.authToken) : undefined;
+        return {
+          type: "api_key",
+          token,
+        };
+      }
+      default:
+        return undefined;
+    }
+  } catch (error) {
+    // Log the error but don't fail the request - proceed without auth
+    logger.error(
+      `Failed to decrypt credentials for server auth type ${server.authType}: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+    return undefined;
+  }
+}
+
+/**
  * Makes an HTTP request to an MCP server to invoke a tool
  */
 async function invokeHttpTool(
@@ -55,6 +153,7 @@ async function invokeHttpTool(
   toolName: string,
   args: Record<string, unknown>,
   timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  auth?: AuthParams,
 ): Promise<{ success: boolean; result?: unknown; error?: string }> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -65,11 +164,19 @@ async function invokeHttpTool(
 
     logger.debug(`Invoking tool ${toolName} at ${invokeUrl}`);
 
+    // Build headers with auth if provided
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (auth) {
+      const authHeaders = buildAuthHeaders(auth);
+      Object.assign(headers, authHeaders);
+    }
+
     const response = await fetch(invokeUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify({
         tool_name: toolName,
         arguments: args,
@@ -125,9 +232,11 @@ async function invokeHttpTool(
  * This function:
  * 1. Looks up the server from the database
  * 2. Validates the tool exists on the server
- * 3. Forwards the request to the MCP server's endpoint (if HTTP-based)
- * 4. Records the invocation in the toolInvocations table
- * 5. Returns the result
+ * 3. Checks if the server uses stdio transport (cannot be proxied)
+ * 4. Extracts and decrypts server credentials for authentication
+ * 5. Forwards the request to the MCP server's endpoint with auth headers
+ * 6. Records the invocation in the toolInvocations table
+ * 7. Returns the result
  */
 export async function invokeToolProxy(request: ProxyRequest): Promise<ProxyResult> {
   const startTime = Date.now();
@@ -182,12 +291,21 @@ export async function invokeToolProxy(request: ProxyRequest): Promise<ProxyResul
       };
     }
 
-    // 4. Forward the request to the MCP server
-    const invocationResult = await invokeHttpTool(server.endpointUrl, request.toolName, request.arguments);
+    // 4. Extract and decrypt server credentials for auth
+    const auth = extractServerAuth(server);
+
+    // 5. Forward the request to the MCP server
+    const invocationResult = await invokeHttpTool(
+      server.endpointUrl,
+      request.toolName,
+      request.arguments,
+      DEFAULT_TIMEOUT_MS,
+      auth,
+    );
 
     const durationMs = Date.now() - startTime;
 
-    // 5. Record the invocation
+    // 6. Record the invocation
     await recordInvocation(server.id, tool.id, durationMs, invocationResult.success);
 
     if (!invocationResult.success) {

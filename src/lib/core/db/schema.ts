@@ -9,6 +9,7 @@ export const registrySchema = pgSchema("registry");
 // Enums
 export const serverTypeEnum = registrySchema.enum("server_type", ["official", "community", "mock"]);
 export const serverStatusEnum = registrySchema.enum("server_status", ["active", "inactive", "error"]);
+export const authTypeEnum = registrySchema.enum("auth_type", ["none", "basic", "bearer", "api_key"]);
 
 // MCP Servers Table
 export const mcpServers = registrySchema.table("mcp_servers", {
@@ -21,6 +22,11 @@ export const mcpServers = registrySchema.table("mcp_servers", {
   status: serverStatusEnum("status").notNull().default("active"),
   version: varchar("version", { length: 50 }),
   lastHealthCheck: timestamp("last_health_check"),
+  // Authentication fields for connecting to protected MCP servers
+  authType: authTypeEnum("auth_type"),
+  authUsername: varchar("auth_username", { length: 255 }),
+  authPassword: varchar("auth_password", { length: 512 }),
+  authToken: varchar("auth_token", { length: 1024 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

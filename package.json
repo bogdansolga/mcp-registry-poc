@@ -9,12 +9,12 @@
     "start": "next start",
     "copy-resources": "node scripts/prepare-standalone-minimal.cjs",
     "start-standalone": "node .next/standalone/server.js",
-    "start-prod": "pnpm run build-prod && pnpm run copy-resources && pnpm run start-standalone",
+    "start-prod": "bun run build-prod && bun run copy-resources && bun run start-standalone",
     "lint": "biome check --write .",
     "format": "biome format --write .",
     "type-check": "tsc --noEmit",
     "hooks:install": "node scripts/setup/install-git-hooks.js",
-    "verify:all": "pnpm run type-check && pnpm run lint",
+    "verify:all": "bun run type-check && bun run lint",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
@@ -54,5 +54,8 @@
     "eslint-config-next": "16.1.1",
     "typescript": "^5.9.3",
     "ultracite": "^6.5.0"
-  }
+  },
+  "trustedDependencies": [
+    "unrs-resolver"
+  ]
 }

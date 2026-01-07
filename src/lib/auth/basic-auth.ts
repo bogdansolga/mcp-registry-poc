@@ -5,8 +5,7 @@ const COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7 days in seconds
 
 function createAuthCookie(): string {
   // Simple token: base64 encoded timestamp + secret
-  const token = Buffer.from(`authenticated:${Date.now()}`).toString("base64");
-  return token;
+  return Buffer.from(`authenticated:${Date.now()}`).toString("base64");
 }
 
 function isValidAuthCookie(cookieValue: string): boolean {
