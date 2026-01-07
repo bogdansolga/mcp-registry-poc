@@ -51,6 +51,7 @@ export function RegistryBrowser() {
 
       const url = `/api/registry/servers${params.toString() ? `?${params.toString()}` : ""}`;
       const response = await fetch(url, {
+        credentials: "include",
         headers: {
           Authorization: `Basic ${btoa("admin:password")}`,
         },

@@ -1,11 +1,11 @@
 import { and, eq, type SQL, sql } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
-import { requireBasicAuth } from "@/lib/auth/basic-auth";
+import { createAuthCookieHeader, requireBasicAuthWithCookie } from "@/lib/auth/basic-auth";
 import { db } from "@/lib/core/db";
 import { mcpServers, tools } from "@/lib/core/db/schema";
 
 export async function GET(request: NextRequest) {
-  const authError = requireBasicAuth(request);
+  const { error: authError, setCookie } = requireBasicAuthWithCookie(request);
   if (authError) return authError;
 
   const { searchParams } = new URL(request.url);
@@ -44,10 +44,16 @@ export async function GET(request: NextRequest) {
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(mcpServers.createdAt);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       servers,
       total: servers.length,
     });
+
+    if (setCookie) {
+      response.headers.set("Set-Cookie", createAuthCookieHeader());
+    }
+
+    return response;
   } catch (_error) {
     return NextResponse.json({ error: "Internal server error", code: "INTERNAL_ERROR" }, { status: 500 });
   }
