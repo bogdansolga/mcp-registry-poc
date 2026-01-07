@@ -2,13 +2,15 @@ import { ServerRegistrationForm } from "@/components/registration/server-registr
 
 export default function RegisterPage() {
   return (
-    <main className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Register MCP Server</h1>
-        <p className="mt-2 text-muted-foreground">Add a new server to the MCP Registry</p>
-      </div>
+    <main className="min-h-screen bg-slate-50/50">
+      <div className="container py-10">
+        <div className="mb-10">
+          <h1 className="text-3xl font-bold text-slate-900">Register MCP Server</h1>
+          <p className="mt-2 text-slate-600">Add a new server to the MCP Registry</p>
+        </div>
 
-      <ServerRegistrationForm />
+        <ServerRegistrationForm />
+      </div>
     </main>
   );
 }

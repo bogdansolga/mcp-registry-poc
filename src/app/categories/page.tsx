@@ -37,11 +37,12 @@ export default async function CategoriesPage() {
   const data = await getCategories();
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Tool Categories</h1>
-        <p className="mt-2 text-muted-foreground">Browse MCP tools by category</p>
-      </div>
+    <main className="min-h-screen bg-slate-50/50">
+      <div className="container py-10">
+        <div className="mb-10">
+          <h1 className="text-3xl font-bold text-slate-900">Tool Categories</h1>
+          <p className="mt-2 text-slate-600">Browse MCP tools by category</p>
+        </div>
 
       {data.categories.length === 0 ? (
         <Card>
@@ -71,6 +72,7 @@ export default async function CategoriesPage() {
           ))}
         </div>
       )}
+      </div>
     </main>
   );
 }

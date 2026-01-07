@@ -7,18 +7,20 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       {/* Hero Section */}
-      <section className="border-b bg-gradient-to-b from-background to-muted/30 py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">MCP Registry</h1>
-          <p className="mx-auto mt-4 max-w-2xl text-xl text-muted-foreground">
+      <section className="border-b bg-gradient-to-b from-slate-50 to-white py-24">
+        <div className="container text-center">
+          <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
+            MCP Registry
+          </h1>
+          <p className="mx-auto mt-6 max-w-2xl text-xl text-slate-600">
             Centralized catalog for Model Context Protocol servers
           </p>
-          <p className="mx-auto mt-6 max-w-3xl text-muted-foreground">
+          <p className="mx-auto mt-4 max-w-3xl text-slate-500">
             Discover, register, and manage MCP servers in one place. Browse available tools, monitor server health, and
             integrate powerful capabilities into your AI applications.
           </p>
-          <div className="mt-8">
-            <Button size="lg" asChild>
+          <div className="mt-10">
+            <Button size="lg" asChild className="gap-2">
               <Link href="/registry">
                 Browse Registry
                 <ArrowRight className="h-4 w-4" />
@@ -29,10 +31,10 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="border-b py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Card className="text-center">
+      <section className="border-b py-16">
+        <div className="container">
+          <div className="grid gap-6 sm:grid-cols-3">
+            <Card className="text-center shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-4xl font-bold text-primary">15+</CardTitle>
               </CardHeader>
@@ -40,7 +42,7 @@ export default function Home() {
                 <CardDescription className="text-base">Total Servers</CardDescription>
               </CardContent>
             </Card>
-            <Card className="text-center">
+            <Card className="text-center shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-4xl font-bold text-green-600">12</CardTitle>
               </CardHeader>
@@ -48,7 +50,7 @@ export default function Home() {
                 <CardDescription className="text-base">Active Servers</CardDescription>
               </CardContent>
             </Card>
-            <Card className="text-center">
+            <Card className="text-center shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-4xl font-bold text-blue-600">50+</CardTitle>
               </CardHeader>
@@ -61,63 +63,65 @@ export default function Home() {
       </section>
 
       {/* Navigation Cards Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="mb-8 text-center text-2xl font-bold">Get Started</h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="py-20">
+        <div className="container">
+          <h2 className="mb-12 text-center text-3xl font-bold text-slate-900">Get Started</h2>
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             <Link href="/registry">
-              <Card className="h-full transition-all hover:border-primary/50 hover:shadow-lg">
-                <CardHeader>
-                  <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <Database className="h-6 w-6 text-primary" />
+              <Card className="h-full shadow-sm transition-all hover:border-primary/50 hover:shadow-md">
+                <CardHeader className="pb-4">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
+                    <Database className="h-7 w-7 text-primary" />
                   </div>
-                  <CardTitle>Browse Registry</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-xl">Browse Registry</CardTitle>
+                  <CardDescription className="text-base">
                     Explore the complete catalog of registered MCP servers and their capabilities
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center text-sm text-primary">
+                  <div className="flex items-center gap-1 text-sm font-medium text-primary">
                     View servers
-                    <ArrowRight className="ml-1 h-4 w-4" />
+                    <ArrowRight className="h-4 w-4" />
                   </div>
                 </CardContent>
               </Card>
             </Link>
 
             <Link href="/register">
-              <Card className="h-full transition-all hover:border-primary/50 hover:shadow-lg">
-                <CardHeader>
-                  <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-green-500/10">
-                    <UserPlus className="h-6 w-6 text-green-600" />
+              <Card className="h-full shadow-sm transition-all hover:border-green-500/50 hover:shadow-md">
+                <CardHeader className="pb-4">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-green-500/10">
+                    <UserPlus className="h-7 w-7 text-green-600" />
                   </div>
-                  <CardTitle>Register Server</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-xl">Register Server</CardTitle>
+                  <CardDescription className="text-base">
                     Add your MCP server to the registry and make it discoverable to others
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center text-sm text-green-600">
+                  <div className="flex items-center gap-1 text-sm font-medium text-green-600">
                     Register now
-                    <ArrowRight className="ml-1 h-4 w-4" />
+                    <ArrowRight className="h-4 w-4" />
                   </div>
                 </CardContent>
               </Card>
             </Link>
 
             <Link href="/categories">
-              <Card className="h-full transition-all hover:border-primary/50 hover:shadow-lg">
-                <CardHeader>
-                  <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/10">
-                    <FolderOpen className="h-6 w-6 text-blue-600" />
+              <Card className="h-full shadow-sm transition-all hover:border-blue-500/50 hover:shadow-md">
+                <CardHeader className="pb-4">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-500/10">
+                    <FolderOpen className="h-7 w-7 text-blue-600" />
                   </div>
-                  <CardTitle>Tool Categories</CardTitle>
-                  <CardDescription>Browse tools organized by category to find exactly what you need</CardDescription>
+                  <CardTitle className="text-xl">Tool Categories</CardTitle>
+                  <CardDescription className="text-base">
+                    Browse tools organized by category to find exactly what you need
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center text-sm text-blue-600">
+                  <div className="flex items-center gap-1 text-sm font-medium text-blue-600">
                     Browse categories
-                    <ArrowRight className="ml-1 h-4 w-4" />
+                    <ArrowRight className="h-4 w-4" />
                   </div>
                 </CardContent>
               </Card>
@@ -127,34 +131,47 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="border-t bg-muted/30 py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="mb-8 text-center text-2xl font-bold">Why Use MCP Registry?</h2>
-          <div className="grid gap-8 md:grid-cols-3">
+      <section className="border-t bg-slate-50 py-20">
+        <div className="container">
+          <h2 className="mb-12 text-center text-3xl font-bold text-slate-900">Why Use MCP Registry?</h2>
+          <div className="grid gap-12 md:grid-cols-3">
             <div className="text-center">
-              <Server className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
-              <h3 className="mb-2 font-semibold">Centralized Discovery</h3>
-              <p className="text-sm text-muted-foreground">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm">
+                <Server className="h-8 w-8 text-slate-600" />
+              </div>
+              <h3 className="mb-3 text-lg font-semibold text-slate-900">Centralized Discovery</h3>
+              <p className="text-slate-600">
                 Find and connect to MCP servers from a single, unified catalog
               </p>
             </div>
             <div className="text-center">
-              <Database className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
-              <h3 className="mb-2 font-semibold">Rich Metadata</h3>
-              <p className="text-sm text-muted-foreground">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm">
+                <Database className="h-8 w-8 text-slate-600" />
+              </div>
+              <h3 className="mb-3 text-lg font-semibold text-slate-900">Rich Metadata</h3>
+              <p className="text-slate-600">
                 View detailed information about server capabilities, tools, and health status
               </p>
             </div>
             <div className="text-center">
-              <FolderOpen className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
-              <h3 className="mb-2 font-semibold">Organized Categories</h3>
-              <p className="text-sm text-muted-foreground">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm">
+                <FolderOpen className="h-8 w-8 text-slate-600" />
+              </div>
+              <h3 className="mb-3 text-lg font-semibold text-slate-900">Organized Categories</h3>
+              <p className="text-slate-600">
                 Tools organized by category for easy browsing and discovery
               </p>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="border-t py-8">
+        <div className="container text-center text-sm text-slate-500">
+          <p>MCP Registry &copy; {new Date().getFullYear()}. Built for the Model Context Protocol ecosystem.</p>
+        </div>
+      </footer>
     </main>
   );
 }
