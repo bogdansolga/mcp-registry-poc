@@ -266,205 +266,29 @@ curl -X POST http://localhost:3000/api/registry/register \
 
 ## Compatibility
 
-### Current Registry Limitations
-
-The MCP Registry proxy currently has limitations with standard MCP protocol:
+### Current Registry Support
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| HTTP Streamable Transport | ⚠️ Partial | Custom `/invoke` endpoint, not JSON-RPC |
-| SSE Transport | ❌ Not supported | Required for official Atlassian server |
-| JSON-RPC 2.0 | ❌ Not implemented | MCP spec requires `tools/call` method |
-| OAuth 2.0 flow | ❌ Not implemented | Bearer tokens work, but no OAuth flow |
+| JSON-RPC 2.0 | ✅ Implemented | MCP `tools/call` method supported |
+| HTTP Transport | ✅ Implemented | Full support for HTTP-based MCP servers |
+| SSE Transport | ⚠️ Partial | Direct POST to SSE endpoints; streaming not yet supported |
+| OAuth 2.0 flow | ❌ Not implemented | Bearer tokens work, but no OAuth flow UI |
 
-### What Works Now
+### What Works
 
 - **Registration**: All JIRA servers can be registered in the catalog
 - **Discovery**: Tools are discoverable via the registry API
-- **Basic/Bearer Auth**: Credentials are encrypted and stored securely
+- **Basic/Bearer/API Key Auth**: Credentials are encrypted with AES-256-GCM
+- **HTTP Invocation**: Full JSON-RPC 2.0 support for HTTP-based MCP servers
+- **SSE Invocation**: Direct POST works for many SSE servers; full streaming pending
 
-### What Needs Enhancement
+### Limitations
 
-To fully support JIRA MCP servers via proxy invocation, the registry needs:
+- **Official Atlassian SSE endpoint**: May require full streaming SSE for some operations
+- **OAuth 2.0**: No built-in OAuth flow; you must obtain tokens externally
 
-1. **JSON-RPC 2.0 support** - Send `tools/call` requests per MCP spec
-2. **SSE transport** - For official Atlassian endpoint
-3. **Response parsing** - Handle MCP response format with `content` array
-
-See the [implementation diff](#required-code-changes) below.
-
----
-
-## Required Code Changes
-
-To support standard MCP protocol (including JIRA), apply these changes to `src/lib/proxy/mcp-proxy.ts`:
-
-```diff
---- a/src/lib/proxy/mcp-proxy.ts
-+++ b/src/lib/proxy/mcp-proxy.ts
-@@ -40,6 +40,9 @@ export interface AuthParams {
-
- const DEFAULT_TIMEOUT_MS = 10000; // 10 seconds
-
-+// Request ID counter for JSON-RPC
-+let jsonRpcIdCounter = 1;
-+
- // Common stdio transport indicators in endpoint URLs
- const STDIO_INDICATORS = ["stdio://", "npx ", "node ", "python ", "uvx "];
-
-@@ -50,6 +53,11 @@ function isStdioTransport(endpointUrl: string): boolean {
-   return STDIO_INDICATORS.some((indicator) => lowerUrl.includes(indicator.toLowerCase()));
- }
-
-+/** Detects if the endpoint uses SSE transport */
-+function isSseTransport(endpointUrl: string): boolean {
-+  return endpointUrl.includes("/sse");
-+}
-+
- /** Builds authentication headers based on auth type */
- function buildAuthHeaders(auth: AuthParams): Record<string, string> {
-   const headers: Record<string, string> = {};
-@@ -146,6 +154,100 @@ function extractServerAuth(server: {
- }
-
- /**
-+ * Makes a JSON-RPC 2.0 request to invoke a tool per MCP specification
-+ */
-+async function invokeMcpTool(
-+  endpointUrl: string,
-+  toolName: string,
-+  args: Record<string, unknown>,
-+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
-+  auth?: AuthParams,
-+): Promise<{ success: boolean; result?: unknown; error?: string }> {
-+  const controller = new AbortController();
-+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-+
-+  try {
-+    // Build headers with auth
-+    const headers: Record<string, string> = {
-+      "Content-Type": "application/json",
-+    };
-+
-+    if (auth) {
-+      Object.assign(headers, buildAuthHeaders(auth));
-+    }
-+
-+    // JSON-RPC 2.0 request per MCP specification
-+    const jsonRpcRequest = {
-+      jsonrpc: "2.0",
-+      id: jsonRpcIdCounter++,
-+      method: "tools/call",
-+      params: {
-+        name: toolName,
-+        arguments: args,
-+      },
-+    };
-+
-+    logger.debug(`MCP tools/call: ${toolName} at ${endpointUrl}`);
-+
-+    const response = await fetch(endpointUrl, {
-+      method: "POST",
-+      headers,
-+      body: JSON.stringify(jsonRpcRequest),
-+      signal: controller.signal,
-+    });
-+
-+    clearTimeout(timeoutId);
-+
-+    if (!response.ok) {
-+      const errorText = await response.text().catch(() => "Unknown error");
-+      return { success: false, error: `HTTP ${response.status}: ${errorText}` };
-+    }
-+
-+    const jsonRpcResponse = await response.json();
-+
-+    // Handle JSON-RPC error
-+    if (jsonRpcResponse.error) {
-+      return {
-+        success: false,
-+        error: jsonRpcResponse.error.message || "JSON-RPC error",
-+      };
-+    }
-+
-+    // Extract result - MCP returns content array
-+    const result = jsonRpcResponse.result;
-+
-+    // Check for tool error in result
-+    if (result?.isError) {
-+      const errorContent = result.content?.find((c: { type: string }) => c.type === "text");
-+      return {
-+        success: false,
-+        error: errorContent?.text || "Tool execution error",
-+      };
-+    }
-+
-+    return { success: true, result };
-+  } catch (error) {
-+    clearTimeout(timeoutId);
-+
-+    if (error instanceof Error) {
-+      if (error.name === "AbortError") {
-+        return { success: false, error: `Request timeout after ${timeoutMs}ms` };
-+      }
-+      return { success: false, error: error.message };
-+    }
-+
-+    return { success: false, error: "Unknown error during MCP invocation" };
-+  }
-+}
-+
-+/**
-+ * Invokes a tool via SSE transport (for servers like Atlassian)
-+ */
-+async function invokeSseTool(
-+  endpointUrl: string,
-+  toolName: string,
-+  args: Record<string, unknown>,
-+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
-+  auth?: AuthParams,
-+): Promise<{ success: boolean; result?: unknown; error?: string }> {
-+  // SSE transport requires establishing a connection and sending messages
-+  // This is a placeholder - full implementation requires EventSource handling
-+  return {
-+    success: false,
-+    error: "SSE transport not yet implemented. Use HTTP transport or connect directly.",
-+  };
-+}
-+
-+/**
-  * Makes an HTTP request to an MCP server to invoke a tool
-+ * @deprecated Use invokeMcpTool for standard MCP servers
-  */
- async function invokeHttpTool(
-   endpointUrl: string,
-@@ -277,11 +379,21 @@ export async function invokeToolProxy(request: ProxyRequest): Promise<ProxyResul
-     // 4. Extract and decrypt server credentials for auth
-     const auth = extractServerAuth(server);
-
--    // 5. Forward the request to the MCP server
--    const invocationResult = await invokeHttpTool(
-+    // 5. Determine transport and invoke
-+    let invocationResult: { success: boolean; result?: unknown; error?: string };
-+
-+    if (isSseTransport(server.endpointUrl)) {
-+      // SSE transport (e.g., Atlassian)
-+      invocationResult = await invokeSseTool(
-+        server.endpointUrl, request.toolName, request.arguments, DEFAULT_TIMEOUT_MS, auth
-+      );
-+    } else {
-+      // HTTP transport with JSON-RPC
-+      invocationResult = await invokeMcpTool(
-       server.endpointUrl,
-       request.toolName,
-       request.arguments,
-       DEFAULT_TIMEOUT_MS,
-       auth,
-     );
-+    }
-
-     const durationMs = Date.now() - startTime;
-```
+See [src/lib/proxy/mcp-proxy.ts](../src/lib/proxy/mcp-proxy.ts) for the transport implementation.
 
 ---
 
