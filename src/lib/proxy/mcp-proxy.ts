@@ -225,13 +225,13 @@ function buildAuthHeaders(auth: AuthParams): Record<string, string> {
     case "basic": {
       if (auth.username && auth.password) {
         const credentials = Buffer.from(`${auth.username}:${auth.password}`).toString("base64");
-        headers["Authorization"] = `Basic ${credentials}`;
+        headers.Authorization = `Basic ${credentials}`;
       }
       break;
     }
     case "bearer": {
       if (auth.token) {
-        headers["Authorization"] = `Bearer ${auth.token}`;
+        headers.Authorization = `Bearer ${auth.token}`;
       }
       break;
     }
@@ -241,9 +241,8 @@ function buildAuthHeaders(auth: AuthParams): Record<string, string> {
       }
       break;
     }
-    case "none":
     default:
-      // No auth headers needed
+      // No auth headers needed (includes "none" type)
       break;
   }
 
