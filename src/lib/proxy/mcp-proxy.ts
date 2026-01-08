@@ -327,9 +327,10 @@ async function invokeHttpTransport(
     logger.debug(`HTTP Transport: Invoking ${toolName} at ${endpointUrl}`);
 
     // Build headers with auth if provided
+    // MCP servers may require accepting both JSON and SSE content types
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      Accept: "application/json",
+      Accept: "application/json, text/event-stream",
     };
 
     if (auth) {
