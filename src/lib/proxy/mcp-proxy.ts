@@ -114,9 +114,6 @@ const STDIO_INDICATORS = ["stdio://", "npx ", "node ", "python ", "uvx "];
 // SSE transport indicator in endpoint URLs
 const SSE_INDICATOR = "/sse";
 
-// Request ID counter for JSON-RPC requests
-let jsonRpcIdCounter = 0;
-
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
@@ -150,10 +147,11 @@ function detectTransport(endpointUrl: string): TransportType {
 }
 
 /**
- * Generates a unique ID for JSON-RPC requests
+ * Generates a unique ID for JSON-RPC requests.
+ * Uses timestamp-based ID to avoid issues in serverless/concurrent environments.
  */
 function nextJsonRpcId(): number {
-  return ++jsonRpcIdCounter;
+  return Date.now() * 1000 + Math.floor(Math.random() * 1000);
 }
 
 /**
@@ -431,14 +429,15 @@ async function invokeSseTransport(
     }
 
     // For other content types, try to parse as JSON
+    // Read as text first to avoid double-consumption of response body
+    const responseText = await response.text();
     try {
-      const jsonRpcResponse: JsonRpcResponse = await response.json();
+      const jsonRpcResponse: JsonRpcResponse = JSON.parse(responseText);
       return parseJsonRpcResponse(jsonRpcResponse);
     } catch {
-      const text = await response.text();
       return {
         success: true,
-        result: text,
+        result: responseText,
       };
     }
   } catch (error) {
