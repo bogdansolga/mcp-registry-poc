@@ -38,6 +38,71 @@ export interface AuthParams {
 }
 
 // ============================================================================
+// JSON-RPC 2.0 TYPES
+// ============================================================================
+
+/**
+ * JSON-RPC 2.0 request structure for MCP protocol
+ */
+interface JsonRpcRequest {
+  jsonrpc: "2.0";
+  id: number;
+  method: string;
+  params?: Record<string, unknown>;
+}
+
+/**
+ * JSON-RPC 2.0 error object
+ */
+interface JsonRpcError {
+  code: number;
+  message: string;
+  data?: unknown;
+}
+
+/**
+ * MCP content block returned in tool results
+ */
+interface McpContentBlock {
+  type: string;
+  text?: string;
+  data?: unknown;
+  mimeType?: string;
+}
+
+/**
+ * MCP tool result structure
+ */
+interface McpToolResult {
+  content?: McpContentBlock[];
+  isError?: boolean;
+}
+
+/**
+ * JSON-RPC 2.0 response structure
+ */
+interface JsonRpcResponse {
+  jsonrpc: "2.0";
+  id: number | null;
+  result?: McpToolResult;
+  error?: JsonRpcError;
+}
+
+/**
+ * Transport type for MCP servers
+ */
+type TransportType = "http" | "sse" | "stdio";
+
+/**
+ * Result from transport invoke operation
+ */
+interface TransportResult {
+  success: boolean;
+  result?: unknown;
+  error?: string;
+}
+
+// ============================================================================
 // CONSTANTS
 // ============================================================================
 
@@ -45,6 +110,12 @@ const DEFAULT_TIMEOUT_MS = 10000; // 10 seconds
 
 // Common stdio transport indicators in endpoint URLs
 const STDIO_INDICATORS = ["stdio://", "npx ", "node ", "python ", "uvx "];
+
+// SSE transport indicator in endpoint URLs
+const SSE_INDICATOR = "/sse";
+
+// Request ID counter for JSON-RPC requests
+let jsonRpcIdCounter = 0;
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -56,6 +127,94 @@ const STDIO_INDICATORS = ["stdio://", "npx ", "node ", "python ", "uvx "];
 function isStdioTransport(endpointUrl: string): boolean {
   const lowerUrl = endpointUrl.toLowerCase();
   return STDIO_INDICATORS.some((indicator) => lowerUrl.includes(indicator.toLowerCase()));
+}
+
+/**
+ * Detects if the endpoint URL indicates an SSE transport
+ */
+function isSseTransport(endpointUrl: string): boolean {
+  return endpointUrl.toLowerCase().includes(SSE_INDICATOR);
+}
+
+/**
+ * Detects the transport type from an endpoint URL
+ */
+function detectTransport(endpointUrl: string): TransportType {
+  if (isStdioTransport(endpointUrl)) {
+    return "stdio";
+  }
+  if (isSseTransport(endpointUrl)) {
+    return "sse";
+  }
+  return "http";
+}
+
+/**
+ * Generates a unique ID for JSON-RPC requests
+ */
+function nextJsonRpcId(): number {
+  return ++jsonRpcIdCounter;
+}
+
+/**
+ * Creates a JSON-RPC 2.0 request for MCP tools/call method
+ */
+function createToolsCallRequest(toolName: string, args: Record<string, unknown>): JsonRpcRequest {
+  return {
+    jsonrpc: "2.0",
+    id: nextJsonRpcId(),
+    method: "tools/call",
+    params: {
+      name: toolName,
+      arguments: args,
+    },
+  };
+}
+
+/**
+ * Parses a JSON-RPC 2.0 response and extracts the result or error
+ */
+function parseJsonRpcResponse(response: JsonRpcResponse): TransportResult {
+  // Check for top-level JSON-RPC error
+  if (response.error) {
+    return {
+      success: false,
+      error: `JSON-RPC error ${response.error.code}: ${response.error.message}`,
+    };
+  }
+
+  // Check for MCP-level error in result
+  if (response.result?.isError) {
+    const errorContent = response.result.content?.[0];
+    const errorMessage = errorContent?.text || "Tool execution failed";
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+
+  // Success - extract content from result
+  const content = response.result?.content;
+  if (content && content.length > 0) {
+    // If single text content, extract just the text
+    if (content.length === 1 && content[0].type === "text" && content[0].text) {
+      return {
+        success: true,
+        result: content[0].text,
+      };
+    }
+    // Otherwise return the full content array
+    return {
+      success: true,
+      result: content,
+    };
+  }
+
+  // No content in result
+  return {
+    success: true,
+    result: response.result,
+  };
 }
 
 /**
@@ -145,28 +304,34 @@ function extractServerAuth(server: {
   }
 }
 
+// ============================================================================
+// TRANSPORT IMPLEMENTATIONS
+// ============================================================================
+
 /**
- * Makes an HTTP request to an MCP server to invoke a tool
+ * HTTP Transport for MCP servers using JSON-RPC 2.0 over HTTP POST.
+ * Sends requests to the endpoint URL directly.
  */
-async function invokeHttpTool(
+async function invokeHttpTransport(
   endpointUrl: string,
   toolName: string,
   args: Record<string, unknown>,
   timeoutMs: number = DEFAULT_TIMEOUT_MS,
   auth?: AuthParams,
-): Promise<{ success: boolean; result?: unknown; error?: string }> {
+): Promise<TransportResult> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    // Build the invoke URL
-    const invokeUrl = `${endpointUrl.replace(/\/$/, "")}/invoke`;
+    // Create JSON-RPC request
+    const jsonRpcRequest = createToolsCallRequest(toolName, args);
 
-    logger.debug(`Invoking tool ${toolName} at ${invokeUrl}`);
+    logger.debug(`HTTP Transport: Invoking ${toolName} at ${endpointUrl}`);
 
     // Build headers with auth if provided
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
+      Accept: "application/json",
     };
 
     if (auth) {
@@ -174,13 +339,10 @@ async function invokeHttpTool(
       Object.assign(headers, authHeaders);
     }
 
-    const response = await fetch(invokeUrl, {
+    const response = await fetch(endpointUrl, {
       method: "POST",
       headers,
-      body: JSON.stringify({
-        tool_name: toolName,
-        arguments: args,
-      }),
+      body: JSON.stringify(jsonRpcRequest),
       signal: controller.signal,
     });
 
@@ -194,31 +356,149 @@ async function invokeHttpTool(
       };
     }
 
-    const result = await response.json();
-    return {
-      success: true,
-      result,
-    };
+    const jsonRpcResponse: JsonRpcResponse = await response.json();
+    return parseJsonRpcResponse(jsonRpcResponse);
   } catch (error) {
     clearTimeout(timeoutId);
+    return handleTransportError(error, timeoutMs);
+  }
+}
 
-    if (error instanceof Error) {
-      if (error.name === "AbortError") {
-        return {
-          success: false,
-          error: `Request timeout after ${timeoutMs}ms`,
-        };
-      }
+/**
+ * SSE Transport for MCP servers using Server-Sent Events.
+ * For POC: Attempts direct POST to SSE endpoint (works for Atlassian-style servers).
+ * Full streaming SSE is not yet supported.
+ */
+async function invokeSseTransport(
+  endpointUrl: string,
+  toolName: string,
+  args: Record<string, unknown>,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  auth?: AuthParams,
+): Promise<TransportResult> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    // Create JSON-RPC request
+    const jsonRpcRequest = createToolsCallRequest(toolName, args);
+
+    logger.debug(`SSE Transport: Invoking ${toolName} at ${endpointUrl}`);
+
+    // Build headers with auth if provided
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "application/json, text/event-stream",
+    };
+
+    if (auth) {
+      const authHeaders = buildAuthHeaders(auth);
+      Object.assign(headers, authHeaders);
+    }
+
+    // Attempt direct POST to SSE endpoint (works for many SSE servers)
+    const response = await fetch(endpointUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(jsonRpcRequest),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "Unknown error");
       return {
         success: false,
-        error: error.message,
+        error: `HTTP ${response.status}: ${errorText}`,
       };
     }
 
+    const contentType = response.headers.get("content-type") || "";
+
+    // If server returns JSON, parse as JSON-RPC response
+    if (contentType.includes("application/json")) {
+      const jsonRpcResponse: JsonRpcResponse = await response.json();
+      return parseJsonRpcResponse(jsonRpcResponse);
+    }
+
+    // If server returns SSE stream, we don't support streaming yet
+    if (contentType.includes("text/event-stream")) {
+      return {
+        success: false,
+        error: "Streaming SSE responses are not yet supported. Server returned event stream instead of JSON.",
+      };
+    }
+
+    // For other content types, try to parse as JSON
+    try {
+      const jsonRpcResponse: JsonRpcResponse = await response.json();
+      return parseJsonRpcResponse(jsonRpcResponse);
+    } catch {
+      const text = await response.text();
+      return {
+        success: true,
+        result: text,
+      };
+    }
+  } catch (error) {
+    clearTimeout(timeoutId);
+    return handleTransportError(error, timeoutMs);
+  }
+}
+
+/**
+ * Common error handling for transport operations
+ */
+function handleTransportError(error: unknown, timeoutMs: number): TransportResult {
+  if (error instanceof Error) {
+    if (error.name === "AbortError") {
+      return {
+        success: false,
+        error: `Request timeout after ${timeoutMs}ms`,
+      };
+    }
     return {
       success: false,
-      error: "Unknown error during invocation",
+      error: error.message,
     };
+  }
+
+  return {
+    success: false,
+    error: "Unknown error during invocation",
+  };
+}
+
+/**
+ * Invokes a tool using the appropriate transport based on endpoint URL.
+ * Automatically detects HTTP vs SSE transport from URL patterns.
+ */
+function invokeWithTransport(
+  endpointUrl: string,
+  toolName: string,
+  args: Record<string, unknown>,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  auth?: AuthParams,
+): Promise<TransportResult> {
+  const transport = detectTransport(endpointUrl);
+
+  switch (transport) {
+    case "sse":
+      return invokeSseTransport(endpointUrl, toolName, args, timeoutMs, auth);
+    case "http":
+      return invokeHttpTransport(endpointUrl, toolName, args, timeoutMs, auth);
+    case "stdio":
+      // This should be caught earlier, but handle it here as a safety net
+      return Promise.resolve({
+        success: false,
+        error: "stdio transport cannot be proxied via HTTP",
+      });
+    default:
+      return Promise.resolve({
+        success: false,
+        error: `Unknown transport type: ${transport}`,
+      });
   }
 }
 
@@ -232,9 +512,9 @@ async function invokeHttpTool(
  * This function:
  * 1. Looks up the server from the database
  * 2. Validates the tool exists on the server
- * 3. Checks if the server uses stdio transport (cannot be proxied)
+ * 3. Detects transport type and checks if it can be proxied
  * 4. Extracts and decrypts server credentials for authentication
- * 5. Forwards the request to the MCP server's endpoint with auth headers
+ * 5. Forwards JSON-RPC 2.0 request using appropriate transport (HTTP/SSE)
  * 6. Records the invocation in the toolInvocations table
  * 7. Returns the result
  */
@@ -274,8 +554,11 @@ export async function invokeToolProxy(request: ProxyRequest): Promise<ProxyResul
       };
     }
 
-    // 3. Check if this is a stdio-based server
-    if (isStdioTransport(server.endpointUrl)) {
+    // 3. Detect transport type and check if it can be proxied
+    const transportType = detectTransport(server.endpointUrl);
+    logger.debug(`Detected transport type: ${transportType} for ${server.endpointUrl}`);
+
+    if (transportType === "stdio") {
       logger.info(`Server ${server.name} uses stdio transport, cannot proxy`);
 
       // Record the invocation attempt (as failed due to transport type)
@@ -294,8 +577,8 @@ export async function invokeToolProxy(request: ProxyRequest): Promise<ProxyResul
     // 4. Extract and decrypt server credentials for auth
     const auth = extractServerAuth(server);
 
-    // 5. Forward the request to the MCP server
-    const invocationResult = await invokeHttpTool(
+    // 5. Forward JSON-RPC 2.0 request using appropriate transport
+    const invocationResult = await invokeWithTransport(
       server.endpointUrl,
       request.toolName,
       request.arguments,
