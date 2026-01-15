@@ -354,6 +354,27 @@ async function invokeHttpTransport(
       };
     }
 
+    const contentType = response.headers.get("content-type") || "";
+
+    // Handle SSE responses (MCP streamableHttp returns SSE format)
+    if (contentType.includes("text/event-stream")) {
+      const sseText = await response.text();
+      const dataLines = sseText
+        .split("\n")
+        .filter((line) => line.startsWith("data: "))
+        .map((line) => line.slice(6));
+
+      if (dataLines.length > 0) {
+        try {
+          const jsonRpcResponse: JsonRpcResponse = JSON.parse(dataLines[dataLines.length - 1]);
+          return parseJsonRpcResponse(jsonRpcResponse);
+        } catch {
+          return { success: false, error: "Failed to parse SSE response data as JSON" };
+        }
+      }
+      return { success: false, error: "No data found in SSE response" };
+    }
+
     const jsonRpcResponse: JsonRpcResponse = await response.json();
     return parseJsonRpcResponse(jsonRpcResponse);
   } catch (error) {
@@ -420,11 +441,31 @@ async function invokeSseTransport(
       return parseJsonRpcResponse(jsonRpcResponse);
     }
 
-    // If server returns SSE stream, we don't support streaming yet
+    // If server returns SSE stream, parse the SSE data lines
     if (contentType.includes("text/event-stream")) {
+      const sseText = await response.text();
+      // Extract JSON from SSE data lines (format: "data: {...}")
+      const dataLines = sseText
+        .split("\n")
+        .filter((line) => line.startsWith("data: "))
+        .map((line) => line.slice(6)); // Remove "data: " prefix
+
+      if (dataLines.length > 0) {
+        try {
+          // Parse the last data line (final response)
+          const jsonRpcResponse: JsonRpcResponse = JSON.parse(dataLines[dataLines.length - 1]);
+          return parseJsonRpcResponse(jsonRpcResponse);
+        } catch {
+          return {
+            success: false,
+            error: "Failed to parse SSE response data as JSON",
+          };
+        }
+      }
+
       return {
         success: false,
-        error: "Streaming SSE responses are not yet supported. Server returned event stream instead of JSON.",
+        error: "No data found in SSE response",
       };
     }
 
