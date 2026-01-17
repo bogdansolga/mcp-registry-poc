@@ -17,12 +17,12 @@ MCP Registry POC is a Next.js 16 application for discovering and managing Model 
 ## Key Commands
 
 ```bash
-pnpm dev              # Development server (port 3000)
-pnpm build            # Production build
-pnpm lint             # Run Biome linter (auto-fix)
-pnpm type-check       # TypeScript checks
-pnpm db:push          # Push schema changes to DB
-pnpm db:studio        # Open Drizzle Studio
+bun dev              # Development server (port 3000)
+bun run build        # Production build
+bun lint             # Run Biome linter (auto-fix)
+bun type-check       # TypeScript checks
+bun db:push          # Push schema changes to DB
+bun db:studio        # Open Drizzle Studio
 ```
 
 ## Project Structure
@@ -62,7 +62,7 @@ Simple Basic Auth with hardcoded credentials: `admin:password`
 
 ## Code Style
 
-- Use Biome for formatting (run `pnpm lint`)
+- Use Biome for formatting (run `bun lint`)
 - Prefer named exports
 - Use `@/` path alias for imports
 - Component files use PascalCase
@@ -94,7 +94,7 @@ Error:
 
 ### Modifying database schema
 1. Edit `src/lib/core/db/schema.ts`
-2. Run `pnpm db:push` to apply changes
+2. Run `bun db:push` to apply changes
 3. Update types are auto-inferred from schema
 
 ## Environment Variables

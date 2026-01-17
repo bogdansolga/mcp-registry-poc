@@ -21,8 +21,7 @@ A proof-of-concept web application for discovering, registering, and managing Mo
 
 ## Prerequisites
 
-- Node.js 20+
-- pnpm
+- Node.js 20+ or Bun
 - PostgreSQL 15+
 
 ## Getting Started
@@ -32,7 +31,7 @@ A proof-of-concept web application for discovering, registering, and managing Mo
 ```bash
 git clone git@github.com:N-iX-GenAI-Value-LAB/mcp-registry-poc.git
 cd mcp-registry-poc
-pnpm install
+bun install
 ```
 
 ### 2. Database Setup
@@ -52,13 +51,13 @@ Run the database setup script:
 Or manually push the schema:
 
 ```bash
-pnpm db:push
+bun db:push
 ```
 
 ### 3. Run Development Server
 
 ```bash
-pnpm dev
+bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
@@ -118,15 +117,15 @@ See `/api-docs` for full documentation.
 ## Scripts
 
 ```bash
-pnpm dev              # Start development server
-pnpm build            # Build for production
-pnpm start            # Start production server
-pnpm lint             # Run Biome linter
-pnpm type-check       # TypeScript type checking
-pnpm db:push          # Push schema to database
-pnpm db:studio        # Open Drizzle Studio
-pnpm db:dump          # Dump database
-pnpm db:restore       # Restore database
+bun dev              # Start development server
+bun run build        # Build for production
+bun start            # Start production server
+bun lint             # Run Biome linter
+bun type-check       # TypeScript type checking
+bun db:push          # Push schema to database
+bun db:studio        # Open Drizzle Studio
+bun db:dump          # Dump database
+bun db:restore       # Restore database
 ```
 
 ## Authentication
